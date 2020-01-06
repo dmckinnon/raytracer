@@ -26,7 +26,10 @@ using namespace cv;
 
 int main(int argc, char** argv)
 {
+	// Read shapes in from files
 
+	// right now only supported shapes are spheres but design the interface so that 
+	// arbitrary shapes defined by euqations work
 
 	return 0;
 }
