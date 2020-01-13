@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -106,13 +106,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>E:\d_mcc\Projects\Eigen;E:\d_mcc\Projects\Eigen\Eigen\src\Jacobi;E:\d_mcc\Projects\Eigen\Eigen\src\SVD;E:\d_mcc\Projects\OpenCV\opencv-3.4.1\opencv-3.4.1\modules\flann\include;E:\d_mcc\Projects\OpenCV\opencv-3.4.1\opencv-3.4.1\modules\calib3d\include;E:\d_mcc\Projects\OpenCV\opencv-3.4.1\build\install\include;E:\d_mcc\Projects\OpenCV\opencv-3.4.1\opencv-3.4.1\modules\highgui\include;E:\d_mcc\Projects\OpenCV\opencv-3.4.1\opencv-3.4.1\modules\imgcodecs\include;E:\d_mcc\Projects\OpenCV\opencv-3.4.1\opencv-3.4.1\include;E:\d_mcc\Projects\OpenCV\opencv-3.4.1\opencv-3.4.1\modules\core\include;E:\d_mcc\Projects\OpenCV\opencv-3.4.1\opencv-3.4.1\modules\features2d\include;E:\d_mcc\Projects\OpenCV\opencv_contrib-3.4.1\opencv_contrib-3.4.1\modules\xfeatures2d\include\opencv2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\d_mcc\Projects\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>E:\d_mcc\Projects\OpenCV\opencv-3.4.1\build\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_core341d.lib;opencv_flann341d.lib;opencv_calib3d341d.lib;opencv_features2d341d.lib;opencv_highgui341d.lib;opencv_imgproc341d.lib;opencv_imgcodecs341d.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -155,6 +155,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="RayTracer.cpp" />
+    <ClCompile Include="Shape.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
