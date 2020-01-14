@@ -9,6 +9,7 @@
 #include <limits>
 #include <cmath>
 #include <Eigen/Dense>
+#include "Shape.h"
 //#include "geometry.h"
 
 using namespace std;
@@ -53,6 +54,10 @@ bool WriteImageToFile(
 	_In_ const vector<Matrix3f>& frameBuffer,
 	_In_ const Params& params);
 
+bool ReadShapes(
+	_In_ const string& shapeFile,
+	_Out_ vector<Shape> shapes);
+
 /* ------ Main --------*/
 // Read in the scene to render
 // Render
@@ -76,7 +81,10 @@ int main(int argc, char** argv)
 	}
 
 	// right now only supported shapes are spheres but design the interface so that 
-	// arbitrary shapes defined by euqations work
+	// arbitrary shapes defined by equations work once I figure out the math
+
+	vector<Shape> shapes;
+	ReadShapes(params.shapeFile, shapes);
 
 	return 0;
 }
@@ -170,5 +178,19 @@ bool WriteImageToFile(
 		return false;
 	}
 	
+	return true;
+}
+
+/*
+	Read shapes from the file
+	
+	Currently the only supported shapes are technically ellipsoids, and actually spheres
+*/
+bool ReadShapes(
+	_In_ const string& shapeFile,
+	_Out_ vector<Shape> shapes)
+{
+	
+
 	return true;
 }
