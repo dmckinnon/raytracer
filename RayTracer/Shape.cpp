@@ -1,6 +1,9 @@
 #include "Shape.h"
+#include <string>
+#include <fstream>
 
 using namespace Eigen;
+using namespace std;
 
 /*
 	The Sphere class
@@ -12,15 +15,28 @@ Sphere::Sphere()
 {
 	// Default is unit sphere at origin
 	centre = Vector3f(0,0,0);
+	colour = Vector3f(0.5f, 0.5f, 0.5f);
 	coeffs = Vector3f(1, 1, 1);
 	radius = 1;
 }
 
 Sphere::Sphere(
 	_In_ const Eigen::Vector3f& centre,
+	_In_ const Eigen::Vector3f& colour,
 	_In_ const float r)
 {
 	this->centre = centre;
+	this->colour = colour;
+	coeffs = Vector3f(1, 1, 1);
+	this->radius = r;
+}
+
+void Sphere::SetSphere(_In_ const Eigen::Vector3f& centre,
+	_In_ const Eigen::Vector3f& colour,
+	_In_ const float r)
+{
+	this->centre = centre;
+	this->colour = colour;
 	coeffs = Vector3f(1, 1, 1);
 	this->radius = r;
 }
@@ -38,8 +54,17 @@ Sphere::Sphere(
 */
 bool Sphere::DoesRayIntersect(
 	_In_ Eigen::Vector3f ray,
-	_Out_ float& distance)
+	_Out_ float& distance,
+	_Out_ Eigen::Vector3f reflectedRay,
+	_Out_ Eigen::Vector3f refractedRay,
+	_Out_ Eigen::Vector3f colour)
 {
+	// sanity check
+	if (radius == BAD_RADIUS)
+	{
+		return false;
+	}
+
 	// Project centre of sphere on to ray:
 	ray.normalize();
 	Vector3f proj = (centre.dot(ray)) * ray;
@@ -62,7 +87,12 @@ bool Sphere::DoesRayIntersect(
 			// TODO: verify that the first term in the following line is correct ... 
 			distance = proj.norm() - sqrt(radius * radius - distToCentre * distToCentre);
 		}
-		
+
+		// Dummy rays for now
+		reflectedRay = Vector3f(0,0,0);
+		refractedRay = Vector3f(0, 0, 0);
+
+		colour = this->colour;
 		return true;
 	}
 
@@ -71,3 +101,32 @@ bool Sphere::DoesRayIntersect(
 }
 
 
+/*
+	Read shapes from the file
+
+	Currently the only supported shapes are technically ellipsoids, and actually spheres
+*/
+bool ReadShapes(
+	_In_ const string& shapeFile,
+	_Out_ vector<Sphere>& shapes)
+{
+	ifstream file;
+	file.open(shapeFile);
+	if (file.is_open())
+	{
+		// TODO:
+		// Read an entire scene
+		// Shapes + background
+
+		while (!file.eof())
+		{
+			Sphere s;
+			file >> s;
+			shapes.push_back(s);
+		}
+		file.close();
+		return true;
+	}
+
+	return false;
+}
