@@ -15,8 +15,11 @@
 using namespace std;
 using namespace Eigen;
 
-const Eigen::Vector3f BACKGROUND_COLOUR = Vector3f(0.2, 0.7, 0.8);
+const Eigen::Vector3f BACKGROUND_COLOUR = Vector3f(0.1, 0.5, 0.1);
 const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
+
+// TODO define this in a better spot
+#define MAX_SCENE_DEPTH 10;
 
 /*
 	This is an exercise in ray tracing/ray marching/path tracing/whatever. 
@@ -40,11 +43,8 @@ const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 
 	TODO: 
 	- read in any shape as base class
-	- specify a background colour
+	- reflections/refractions/shadows etc
 
-	TO REALLY DO:
-	- make the shape an interface, not an abstrract class. No members
-	- implement joost's feedback
 
 
 */
@@ -106,7 +106,6 @@ int main(int argc, char** argv)
 	// then bidirectional
 	// TODO: describe the whole scene plus light sources
 	RenderScene(shapes, params);
-
 	return 0;
 }
 
@@ -226,6 +225,7 @@ bool RenderScene(
 	// Send rays from each pixel, checking over all shapes for collisions
 	// TODO: hold shapes in an oct-tree, or similar, to make this more efficient
 	// TODO: parallelise
+	//#pragma omp parallel for
 	for (int h = 0; h < params.height; ++h)
 	{
 		for (int w = 0; w < params.width; ++w)
@@ -236,16 +236,20 @@ bool RenderScene(
 			Vector3f ray(x, y, 1.f);
 			ray.normalize();
 
-			Vector3f colour = NO_COLOUR;
+			Vector3f colour = BACKGROUND_COLOUR;
+			float closestDist = MAX_SCENE_DEPTH;
+			// TODO: only use the values from the closest shape hit
 			for (auto& s : shapes)
 			{
 				float distance;
-				Vector3f reflect, refract;
-				if (!s.DoesRayIntersect(ray, distance, reflect, refract, colour))
+				Vector3f reflect, refract, curColour = NO_COLOUR;
+				if (s.DoesRayIntersect(ray, distance, reflect, refract, curColour))
 				{
-					// why aren't we getting into here? Does this function always succeed?
-					// every ray cannot possibly be hitting it?
-					colour = BACKGROUND_COLOUR;
+					if (distance < closestDist)
+					{
+						colour = curColour;
+						closestDist = distance;
+					}
 				}
 			}
 

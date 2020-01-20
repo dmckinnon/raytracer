@@ -59,9 +59,9 @@ void Sphere::SetSphere(_In_ const Eigen::Vector3f& centre,
 bool Sphere::DoesRayIntersect(
 	_In_ Eigen::Vector3f ray,
 	_Out_ float& distance,
-	_Out_ Eigen::Vector3f reflectedRay,
-	_Out_ Eigen::Vector3f refractedRay,
-	_Out_ Eigen::Vector3f colour)
+	_Out_ Eigen::Vector3f& reflectedRay,
+	_Out_ Eigen::Vector3f& refractedRay,
+	_Out_ Eigen::Vector3f& colour)
 {
 	// sanity check
 	if (radius == BAD_RADIUS)

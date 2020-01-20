@@ -15,9 +15,9 @@ public:
 	virtual bool DoesRayIntersect(
 		_In_ Eigen::Vector3f ray,
 		_Out_ float& distance,
-		_Out_ Eigen::Vector3f reflectedRay,
-		_Out_ Eigen::Vector3f refractedRay,
-		_Out_ Eigen::Vector3f colour) = 0;
+		_Out_ Eigen::Vector3f& reflectedRay,
+		_Out_ Eigen::Vector3f& refractedRay,
+		_Out_ Eigen::Vector3f& colour) = 0;
 
 	// To be overloaded
 	//friend std::istream& operator >> (std::istream& is, Shape& s);
@@ -36,9 +36,9 @@ public:
 	bool DoesRayIntersect(
 		_In_ Eigen::Vector3f ray,
 		_Out_ float& distance,
-		_Out_ Eigen::Vector3f reflectedRay,
-		_Out_ Eigen::Vector3f refractedRay,
-		_Out_ Eigen::Vector3f colour) override;
+		_Out_ Eigen::Vector3f& reflectedRay,
+		_Out_ Eigen::Vector3f& refractedRay,
+		_Out_ Eigen::Vector3f& colour) override;
 
 	void SetSphere(_In_ const Eigen::Vector3f& centre,
 		_In_ const Eigen::Vector3f& colour,
