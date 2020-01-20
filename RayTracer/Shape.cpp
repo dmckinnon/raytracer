@@ -31,6 +31,10 @@ Sphere::Sphere(
 	this->radius = r;
 }
 
+Sphere::~Sphere()
+{
+}
+
 void Sphere::SetSphere(_In_ const Eigen::Vector3f& centre,
 	_In_ const Eigen::Vector3f& colour,
 	_In_ const float r)
@@ -100,6 +104,36 @@ bool Sphere::DoesRayIntersect(
 	return false;
 }
 
+/*
+	I/O overloads
+*/
+std::ostream& operator << (std::ostream& os, const Sphere& s)
+{
+	os << /*"SPHERE " <<*/ s.radius << " ";
+	for (int i = 0; i < 3; ++i)
+		os << s.centre[i] << " ";
+	for (int i = 0; i < 3; ++i)
+		os << s.colour[i] << " ";
+	return os;
+}
+std::istream & operator >> (std::istream & is, Sphere & s)
+{
+	std::string shapeType;
+	Eigen::Vector3f centre, colour;
+	float radius;
+
+	/*is >> shapeType;
+	if (strcmp(shapeType.c_str(), "SPHERE") != 0)
+	{
+		s.SetSphere(centre, colour, -1.f);
+	}*/
+
+	is >> radius;
+	is >> centre[0] >> centre[1] >> centre[2];
+	is >> colour[0] >> colour[1] >> colour[2];
+	s.SetSphere(centre, colour, radius);
+	return is;
+}
 
 /*
 	Read shapes from the file

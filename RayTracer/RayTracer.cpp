@@ -16,6 +16,7 @@ using namespace std;
 using namespace Eigen;
 
 const Eigen::Vector3f BACKGROUND_COLOUR = Vector3f(0.2, 0.7, 0.8);
+const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 
 /*
 	This is an exercise in ray tracing/ray marching/path tracing/whatever. 
@@ -41,6 +42,11 @@ const Eigen::Vector3f BACKGROUND_COLOUR = Vector3f(0.2, 0.7, 0.8);
 	- read in any shape as base class
 	- specify a background colour
 
+	TO REALLY DO:
+	- make the shape an interface, not an abstrract class. No members
+	- implement joost's feedback
+
+
 */
 
 /* ---------- Structures ----------- */
@@ -61,7 +67,7 @@ bool WriteImageToFile(
 	_In_ const Params& params);
 
 bool RenderScene(
-	_In_ const vector<Sphere>& shapes,
+	_In_ vector<Sphere>& shapes,
 	_In_ const Params& params);
 
 /* ------ Main --------*/
@@ -126,7 +132,7 @@ void FailBadArgs()
 */
 bool ParseArgs(_In_ const int argc, _In_ char** argv, _Out_ Params& params)
 {
-	for (int i = 0; i < argc; ++i)
+	for (int i = 1; i < argc; ++i)
 	{
 		if (strcmp("-i", argv[i]) == 0)
 		{
@@ -136,7 +142,7 @@ bool ParseArgs(_In_ const int argc, _In_ char** argv, _Out_ Params& params)
 		{
 			params.outputFile = argv[++i];
 		}
-		if (strcmp("-h", argv[i]) == 0)
+		else if (strcmp("-h", argv[i]) == 0)
 		{
 			params.height = stoi(argv[++i]);
 			if (params.height < 1)
@@ -158,7 +164,7 @@ bool ParseArgs(_In_ const int argc, _In_ char** argv, _Out_ Params& params)
 		}
 		else
 		{
-			cout << "Bad argument!" << endl;
+			cout << "Bad argument: " << argv[i] << endl;
 			FailBadArgs();
 			return false;
 		}
@@ -177,7 +183,7 @@ bool WriteImageToFile(
 	_In_ const Params& params)
 {
 	ofstream ofs; // save the framebuffer to file
-	ofs.open("./" + params.outputFile + ".ppm");
+	ofs.open(params.outputFile, fstream::out);
 	if (ofs.is_open())
 	{
 		ofs << "P6\n" << params.width << " " << params.height << "\n255\n";
@@ -187,9 +193,11 @@ bool WriteImageToFile(
 			}
 		}
 		ofs.close();
+		cout << "Written image to file " << params.outputFile << endl;
 	}
 	else
 	{
+		cout << "ERROR: image could not be written to " << params.outputFile << endl;
 		return false;
 	}
 	
@@ -228,18 +236,20 @@ bool RenderScene(
 			Vector3f ray(x, y, 1.f);
 			ray.normalize();
 
-			Vector3f colour;
+			Vector3f colour = NO_COLOUR;
 			for (auto& s : shapes)
 			{
 				float distance;
 				Vector3f reflect, refract;
 				if (!s.DoesRayIntersect(ray, distance, reflect, refract, colour))
 				{
+					// why aren't we getting into here? Does this function always succeed?
+					// every ray cannot possibly be hitting it?
 					colour = BACKGROUND_COLOUR;
 				}
 			}
 
-			frameBuffer[x + y * params.width] = colour;
+			frameBuffer[w + h * params.width] = colour;
 		}
 	}
 
