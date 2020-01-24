@@ -9,7 +9,7 @@
 #include <limits>
 #include <cmath>
 #include <Eigen/Dense>
-#include "Shape.h"
+#include "Scene.h"
 //#include "geometry.h"
 
 using namespace std;
@@ -44,6 +44,8 @@ const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 	TODO: 
 	- read in any shape as base class
 	- reflections/refractions/shadows etc
+	- ambient + diffuse + specular
+	- lighting
 
 
 

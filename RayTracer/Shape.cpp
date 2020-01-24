@@ -1,10 +1,11 @@
-#include "Shape.h"
+#include "Scene.h"
 #include <string>
 #include <fstream>
 
 using namespace Eigen;
 using namespace std;
 
+//-----------------------------------------------------------
 /*
 	The Sphere class
 
@@ -122,12 +123,6 @@ std::istream & operator >> (std::istream & is, Sphere & s)
 	Eigen::Vector3f centre, colour;
 	float radius;
 
-	/*is >> shapeType;
-	if (strcmp(shapeType.c_str(), "SPHERE") != 0)
-	{
-		s.SetSphere(centre, colour, -1.f);
-	}*/
-
 	is >> radius;
 	is >> centre[0] >> centre[1] >> centre[2];
 	is >> colour[0] >> colour[1] >> colour[2];
@@ -135,6 +130,91 @@ std::istream & operator >> (std::istream & is, Sphere & s)
 	return is;
 }
 
+//-----------------------------------------------------------
+/*
+	The Plane class
+*/
+Plane::Plane()
+{
+	normal = Vector3f(1, 0, 0);
+	colour = Vector3f(0.5f, 0.5f, 0.5f);
+	offset = 0.f;
+}
+
+Plane::Plane(
+	_In_ const Eigen::Vector3f& normal,
+	_In_ const float& offset,
+	_In_ const Eigen::Vector3f& colour)
+{
+	this->normal = normal;
+	this->offset = offset;
+	this->colour = colour;
+}
+
+void Plane::SetPlane(
+	_In_ const Eigen::Vector3f& normal,
+	_In_ const float& offset,
+	_In_ const Eigen::Vector3f& colour)
+{
+	this->normal = normal;
+	this->offset = offset;
+	this->colour = colour;
+}
+
+/*
+	This is considerably simpler than the sphere case. 
+	Since the plane is defined by a normal and a constant,
+	all points x on the plane fit dot(n,x) = c
+
+	So we can just check if the ray ever fits this. If it does, we solve
+	for the scalar factor that allows this and that's the distance. If 
+	dot(n,ray) = 0, then we either have infinitely many solutions, or none. 
+	In either case, this is not an intersection. 
+
+	Reflection and refraction follow easily too. 
+*/
+bool Plane::DoesRayIntersect(
+	_In_ Eigen::Vector3f ray,
+	_Out_ float& distance,
+	_Out_ Eigen::Vector3f& reflectedRay,
+	_Out_ Eigen::Vector3f& refractedRay,
+	_Out_ Eigen::Vector3f& colour)
+{
+	float dot = ray.dot(normal);
+	if (dot != 0)
+	{
+		distance = offset / distance;
+		colour = this->colour;
+
+		// solve for reflected and refracted rays etc
+		return true;
+	}
+
+	return false;
+}
+
+std::ostream& operator << (std::ostream& os, const Plane& p)
+{
+	for (int i = 0; i < 3; ++i)
+		os << p.normal[i] << " ";
+	for (int i = 0; i < 3; ++i)
+		os << p.colour[i] << " ";
+	os << p.offset << " ";
+	return os;
+}
+std::istream & operator >> (std::istream & is, Plane& p)
+{
+	Eigen::Vector3f normal, colour;
+	float offset;
+
+	is >> normal[0] >> normal[1] >> normal[2];
+	is >> colour[0] >> colour[1] >> colour[2];
+	is >> offset;
+	p.SetPlane(normal, offset, colour);
+	return is;
+}
+
+//-----------------------------------------------------------
 /*
 	Read shapes from the file
 
