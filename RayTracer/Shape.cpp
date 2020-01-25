@@ -17,7 +17,6 @@ Sphere::Sphere()
 	// Default is unit sphere at origin
 	centre = Vector3f(0,0,0);
 	colour = Vector3f(0.5f, 0.5f, 0.5f);
-	coeffs = Vector3f(1, 1, 1);
 	radius = 1;
 }
 
@@ -28,7 +27,6 @@ Sphere::Sphere(
 {
 	this->centre = centre;
 	this->colour = colour;
-	coeffs = Vector3f(1, 1, 1);
 	this->radius = r;
 }
 
@@ -42,7 +40,6 @@ void Sphere::SetSphere(_In_ const Eigen::Vector3f& centre,
 {
 	this->centre = centre;
 	this->colour = colour;
-	coeffs = Vector3f(1, 1, 1);
 	this->radius = r;
 }
 
@@ -110,7 +107,7 @@ bool Sphere::DoesRayIntersect(
 */
 std::ostream& operator << (std::ostream& os, const Sphere& s)
 {
-	os << /*"SPHERE " <<*/ s.radius << " ";
+	os << "SPHERE " << s.radius << " ";
 	for (int i = 0; i < 3; ++i)
 		os << s.centre[i] << " ";
 	for (int i = 0; i < 3; ++i)
@@ -119,7 +116,6 @@ std::ostream& operator << (std::ostream& os, const Sphere& s)
 }
 std::istream & operator >> (std::istream & is, Sphere & s)
 {
-	std::string shapeType;
 	Eigen::Vector3f centre, colour;
 	float radius;
 
@@ -195,6 +191,7 @@ bool Plane::DoesRayIntersect(
 
 std::ostream& operator << (std::ostream& os, const Plane& p)
 {
+	os << "PLANE ";
 	for (int i = 0; i < 3; ++i)
 		os << p.normal[i] << " ";
 	for (int i = 0; i < 3; ++i)
@@ -212,35 +209,4 @@ std::istream & operator >> (std::istream & is, Plane& p)
 	is >> offset;
 	p.SetPlane(normal, offset, colour);
 	return is;
-}
-
-//-----------------------------------------------------------
-/*
-	Read shapes from the file
-
-	Currently the only supported shapes are technically ellipsoids, and actually spheres
-*/
-bool ReadShapes(
-	_In_ const string& shapeFile,
-	_Out_ vector<Sphere>& shapes)
-{
-	ifstream file;
-	file.open(shapeFile);
-	if (file.is_open())
-	{
-		// TODO:
-		// Read an entire scene
-		// Shapes + background
-
-		while (!file.eof())
-		{
-			Sphere s;
-			file >> s;
-			shapes.push_back(s);
-		}
-		file.close();
-		return true;
-	}
-
-	return false;
 }

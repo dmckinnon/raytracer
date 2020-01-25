@@ -66,6 +66,7 @@ float PointLight::GetIntensity()
 */
 std::ostream& operator << (std::ostream& os, const PointLight& pl)
 {
+	os << "POINTLIGHT ";
 	for (int i = 0; i < 3; ++i)
 		os << pl.position[i] << " ";
 	for (int i = 0; i < 3; ++i)
@@ -84,34 +85,3 @@ std::istream & operator >> (std::istream & is, PointLight& pl)
 	pl.SetLight(position, colour, intensity);
 	return is;
 }
-
-//-----------------------------------------------------------
-/*
-	Read lights from the file
-
-	Currently the only supported shapes are technically ellipsoids, and actually spheres
-*/
-/*bool ReadLights(
-	_In_ const string& shapeFile,
-	_Out_ vector<Sphere>& shapes)
-{
-	ifstream file;
-	file.open(shapeFile);
-	if (file.is_open())
-	{
-		// TODO:
-		// Read an entire scene
-		// Shapes + background
-
-		while (!file.eof())
-		{
-			Sphere s;
-			file >> s;
-			shapes.push_back(s);
-		}
-		file.close();
-		return true;
-	}
-
-	return false;
-}*/

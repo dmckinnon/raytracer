@@ -45,7 +45,10 @@ protected:
 class Scene
 {
 public:
-	Scene() {};
+	Scene() 
+	{
+		backgroundColour = Eigen::Vector3f(0.1f, 0.1f, 0.1f);
+	};
 	~Scene() {};
 
 	// other constructors
@@ -55,8 +58,13 @@ public:
 
 	// Currently backgrounds are just colours, nothing fancier
 	void SetBackground(_In_ Eigen::Vector3f& colour);
+	Eigen::Vector3f GetBackground();
 
 	// What else does a scene have? Objects and lighting, really
+
+	// IO overloads
+	friend std::ostream& operator << (std::ostream& os, const Scene& s);
+	friend std::istream& operator >> (std::istream& is, Scene& s);
 
 private:
 	std::vector<Shape*> shapes;
@@ -121,13 +129,16 @@ public:
 		_In_ const Eigen::Vector3f& colour,
 		_In_ const float r);
 
+	Eigen::Vector3f GetCentre() { return centre; };
+	float           GetRadius() { return radius; };
+	Eigen::Vector3f GetColour() { return colour; };
+
 	// IO overloads
 	friend std::ostream& operator << (std::ostream& os, const Sphere& s);
 	friend std::istream& operator >> (std::istream& is, Sphere& s);
 
 private:
 	float radius;
-	Eigen::Vector3f coeffs;
 	Eigen::Vector3f centre;
 	Eigen::Vector3f colour;
 
@@ -164,8 +175,8 @@ private:
 };
 
 // --------------------------------- //
-// Some general shape functions
+// Some general scene functions
 
-bool ReadShapes(
-	_In_ const std::string& shapeFile,
-	_Out_ std::vector<Sphere>& shapes);
+bool ReadScene(
+	_In_ const std::string& sceneFile,
+	_Out_ Scene& scene);

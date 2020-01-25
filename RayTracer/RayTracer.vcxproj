@@ -156,6 +156,7 @@
   <ItemGroup>
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="RayTracer.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shape.cpp" />
   </ItemGroup>
   <ItemGroup>

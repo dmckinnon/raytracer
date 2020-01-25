@@ -54,10 +54,11 @@ const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 /* ---------- Structures ----------- */
 struct Params
 {
-	string shapeFile;
+	string sceneFile;
 	string outputFile;
 	int width;
 	int height;
+	int fov;
 };
 
 /* ---------- Function prototypes -------------- */
@@ -69,7 +70,7 @@ bool WriteImageToFile(
 	_In_ const Params& params);
 
 bool RenderScene(
-	_In_ vector<Sphere>& shapes,
+	_In_ Scene& scene,
 	_In_ const Params& params);
 
 /* ------ Main --------*/
@@ -98,8 +99,8 @@ int main(int argc, char** argv)
 	// arbitrary shapes defined by equations work once I figure out the math
 
 	// TODO: somehow read all the inherited classes as the base class?
-	vector<Sphere> shapes;
-	ReadShapes(params.shapeFile, shapes);
+	Scene scene;
+	ReadScene(params.sceneFile, scene);
 
 	// Use current ray tracing technique to render the scene
 	// This is starting off as just hit then light
@@ -107,7 +108,7 @@ int main(int argc, char** argv)
 	// Then we'll expand to several bounces + hopefuly light
 	// then bidirectional
 	// TODO: describe the whole scene plus light sources
-	RenderScene(shapes, params);
+	RenderScene(scene, params);
 	return 0;
 }
 
@@ -117,15 +118,25 @@ int main(int argc, char** argv)
 void FailBadArgs()
 {
 	cout << "Usage:" << endl;
-	cout << "raytracer.exe -w <int> -h <int> -i <input_shape_filename> -o <output_imagefilename>" << endl;
+	cout << "raytracer.exe -w <int> -h <int> -f <int> -i <input_shape_filename> -o <output_imagefilename>" << endl;
 	cout << "-h <int>                       : image height" << endl;
 	cout << "-w <int>                       : image width" << endl;
-	cout << "-i <input_shape_filename>      : contains the shapes to be rendered." << endl;
+	cout << "-f <int>                       : field of view in degrees" << endl;
+	cout << "-i <input_scene_filename>      : contains the scene to be rendered." << endl;
 	cout << "-o <output_image_filename>     : name of .ppm file to save output to." << endl;
 	cout << endl;
+	cout << "Scene file format (last line is background colour):" << endl;
+	cout << "numShapes numLights" << endl;
+	cout << "Shapes listed, one per line" << endl;
+	cout << "Lights listed, one per line" << endl;
+	cout << "R G B" << endl;
+	cout << endl;
+	cout << "Currently supported lights: " << endl;
+	cout << "POINTLIGHT Cx Cy Cz Cr Cg Cb intensity" << endl;
+	cout << endl;
 	cout << "Currently supported shapes: " << endl;
-	cout << "ELLIPSOID x y z x_coeff y_coeff z_coeff" << endl;
-	cout << "PLANE Nx Ny Nz" << endl;
+	cout << "SPHERE Cx Cy Cz Cr Cg Cb radius" << endl;
+	cout << "PLANE Nx Ny Nz Cr Cg Cb offset" << endl;
 }
 
 /*
@@ -137,7 +148,7 @@ bool ParseArgs(_In_ const int argc, _In_ char** argv, _Out_ Params& params)
 	{
 		if (strcmp("-i", argv[i]) == 0)
 		{
-			params.shapeFile = argv[++i];
+			params.sceneFile = argv[++i];
 		}
 		else if (strcmp("-o", argv[i]) == 0)
 		{
@@ -157,6 +168,16 @@ bool ParseArgs(_In_ const int argc, _In_ char** argv, _Out_ Params& params)
 		{
 			params.width = stoi(argv[++i]);
 			if (params.width < 1)
+			{
+				cout << "Bad argument!" << endl;
+				FailBadArgs();
+				return false;
+			}
+		}
+		else if (strcmp("-f", argv[i]) == 0)
+		{
+			params.fov = stoi(argv[++i]);
+			if (params.fov < 1)
 			{
 				cout << "Bad argument!" << endl;
 				FailBadArgs();
@@ -215,12 +236,12 @@ bool WriteImageToFile(
 	Next step is to add this to the scene file
 */
 bool RenderScene(
-	_In_ vector<Sphere>& shapes,
+	_In_ Scene& scene,
 	_In_ const Params& params)
 {
 	// This will be the image
 	vector<Vector3f> frameBuffer(params.width*params.height);
-	const float fov = 1.570796; // 90 degrees
+	const float fov = (3.141592 / 180.f) * (float)params.fov;
 	float width = (float)params.width;
 	float height = (float)params.height;
 
@@ -241,7 +262,7 @@ bool RenderScene(
 			Vector3f colour = BACKGROUND_COLOUR;
 			float closestDist = MAX_SCENE_DEPTH;
 			// TODO: only use the values from the closest shape hit
-			for (auto& s : shapes)
+			/*for (auto& s : shapes)
 			{
 				float distance;
 				Vector3f reflect, refract, curColour = NO_COLOUR;
@@ -253,7 +274,7 @@ bool RenderScene(
 						closestDist = distance;
 					}
 				}
-			}
+			}*/
 
 			frameBuffer[w + h * params.width] = colour;
 		}
