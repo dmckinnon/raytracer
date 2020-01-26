@@ -177,9 +177,19 @@ bool Plane::DoesRayIntersect(
 	_Out_ Eigen::Vector3f& colour)
 {
 	float dot = ray.dot(normal);
+
 	if (dot != 0)
 	{
-		distance = offset / distance;
+		distance = offset / dot;
+		if (distance < 0)
+		{
+			// I think this logic is correct
+			// It should mean that if the ray intersection is behind the camera
+			// then reject this
+			// since every ray should have a positive z
+			return false;
+		}
+
 		colour = this->colour;
 
 		// solve for reflected and refracted rays etc

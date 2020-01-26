@@ -15,7 +15,6 @@
 using namespace std;
 using namespace Eigen;
 
-const Eigen::Vector3f BACKGROUND_COLOUR = Vector3f(0.1, 0.5, 0.1);
 const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 
 // TODO define this in a better spot
@@ -47,7 +46,9 @@ const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 	- ambient + diffuse + specular
 	- lighting
 
-
+	BUG:
+	- all spheres have the same colour
+	- planes are not rendering
 
 */
 
@@ -82,6 +83,10 @@ int main(int argc, char** argv)
 {
 	// Read shapes in from files
 	Params params;
+	// Set defaults
+	params.width = 640;
+	params.height = 480;
+	params.fov = 90;
 	if (argc < 4)
 	{
 		FailBadArgs();
@@ -233,7 +238,13 @@ bool WriteImageToFile(
 	and a constant hardcoded light source.
 	and a hardcoded field of view
 
-	Next step is to add this to the scene file
+	Currently this is not a function of the scene class
+	The scene class is purely for organisational purposes
+
+	We want, in future, this to probably be stochastic progressive path mapping 
+	or whatever the name is
+	Where you do BDRT for a few rays at a time, to reduce memory overhead
+	but keep quality
 */
 bool RenderScene(
 	_In_ Scene& scene,
@@ -259,14 +270,14 @@ bool RenderScene(
 			Vector3f ray(x, y, 1.f);
 			ray.normalize();
 
-			Vector3f colour = BACKGROUND_COLOUR;
+			Vector3f colour = scene.GetBackground();
 			float closestDist = MAX_SCENE_DEPTH;
-			// TODO: only use the values from the closest shape hit
-			/*for (auto& s : shapes)
+			vector<Shape*> shapes = scene.GetShapes();
+			for (auto s : shapes)
 			{
 				float distance;
 				Vector3f reflect, refract, curColour = NO_COLOUR;
-				if (s.DoesRayIntersect(ray, distance, reflect, refract, curColour))
+				if (s->DoesRayIntersect(ray, distance, reflect, refract, curColour))
 				{
 					if (distance < closestDist)
 					{
@@ -274,7 +285,7 @@ bool RenderScene(
 						closestDist = distance;
 					}
 				}
-			}*/
+			}
 
 			frameBuffer[w + h * params.width] = colour;
 		}

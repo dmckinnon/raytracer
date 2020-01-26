@@ -56,6 +56,9 @@ public:
 	void AddShape(_In_ Shape* shape);
 	void AddLight(_In_ Light* light);
 
+	std::vector<Shape*> GetShapes() { return shapes; };
+	std::vector<Light*> GetLights() { return lights; };
+
 	// Currently backgrounds are just colours, nothing fancier
 	void SetBackground(_In_ Eigen::Vector3f& colour);
 	Eigen::Vector3f GetBackground();
