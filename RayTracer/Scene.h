@@ -35,9 +35,13 @@ public:
 	virtual bool DoesRayIntersect(
 		_In_ Eigen::Vector3f ray,
 		_Out_ float& distance,
+		_Out_ Eigen::Vector3f& surfaceNormal,
 		_Out_ Eigen::Vector3f& reflectedRay,
 		_Out_ Eigen::Vector3f& refractedRay,
 		_Out_ Eigen::Vector3f& colour) = 0;
+
+	virtual Eigen::Vector3f GetSurfaceNormalAtPoint(
+	    _In_ Eigen::Vector3f& point) = 0;
 
 protected:
 };
@@ -124,9 +128,13 @@ public:
 	bool DoesRayIntersect(
 		_In_ Eigen::Vector3f ray,
 		_Out_ float& distance,
+		_Out_ Eigen::Vector3f& surfaceNormal,
 		_Out_ Eigen::Vector3f& reflectedRay,
 		_Out_ Eigen::Vector3f& refractedRay,
 		_Out_ Eigen::Vector3f& colour) override;
+
+	Eigen::Vector3f GetSurfaceNormalAtPoint(
+		_In_ Eigen::Vector3f& point) override;
 
 	void SetSphere(_In_ const Eigen::Vector3f& centre,
 		_In_ const Eigen::Vector3f& colour,
@@ -158,9 +166,13 @@ public:
 	bool DoesRayIntersect(
 		_In_ Eigen::Vector3f ray,
 		_Out_ float& distance,
+		_Out_ Eigen::Vector3f& surfaceNormal,
 		_Out_ Eigen::Vector3f& reflectedRay,
 		_Out_ Eigen::Vector3f& refractedRay,
 		_Out_ Eigen::Vector3f& colour) override;
+
+	Eigen::Vector3f GetSurfaceNormalAtPoint(
+		_In_ Eigen::Vector3f& point) override;
 
 	void SetPlane(_In_ const Eigen::Vector3f& normal,
 		_In_ const float& offset,

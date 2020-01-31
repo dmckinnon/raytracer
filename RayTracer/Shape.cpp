@@ -53,10 +53,13 @@ void Sphere::SetSphere(_In_ const Eigen::Vector3f& centre,
 
 	One thing we should probably also return is the angle of striking
 	so as to allow for computing the reflections easier
+
+	// TODO this should return surface normal at this point
 */
 bool Sphere::DoesRayIntersect(
 	_In_ Eigen::Vector3f ray,
 	_Out_ float& distance,
+	_Out_ Eigen::Vector3f& surfaceNormal,
 	_Out_ Eigen::Vector3f& reflectedRay,
 	_Out_ Eigen::Vector3f& refractedRay,
 	_Out_ Eigen::Vector3f& colour)
@@ -83,23 +86,38 @@ bool Sphere::DoesRayIntersect(
 		else
 		{
 			// ray passes within circle; find closest point of intersection
-			// Note that the ray could be within the circle
+			// Note that the ray could start within the circle
 			// But for now I'm ignoring this case, since I'm just not going to
 			// make scenes that create this case
 			// TODO: verify that the first term in the following line is correct ... 
 			distance = proj.norm() - sqrt(radius * radius - distToCentre * distToCentre);
+
+			// intersection = p + d*di1
+			// di1 = |pc - p| - dist
+			// dist = sqrt(r*r - |pc - c|^2)
+			// pc - p = projection of centre onto ray, minus ray origin = projection = proj.norm()
 		}
 
 		// Dummy rays for now
 		reflectedRay = Vector3f(0,0,0);
 		refractedRay = Vector3f(0, 0, 0);
-
+		surfaceNormal = distance*ray - centre;
+		
 		colour = this->colour;
 		return true;
 	}
 
 	// Ray passed outside sphere: no intersection
 	return false;
+}
+
+Eigen::Vector3f Sphere::GetSurfaceNormalAtPoint(
+	_In_ Eigen::Vector3f& point)
+{
+	// TODO: confirm point is on the surface
+	Vector3f radial = point - this->centre;
+	Vector3f surfaceNormal = 2 * radial - radial;
+	return surfaceNormal;
 }
 
 /*
@@ -172,11 +190,13 @@ void Plane::SetPlane(
 bool Plane::DoesRayIntersect(
 	_In_ Eigen::Vector3f ray,
 	_Out_ float& distance,
+	_Out_ Eigen::Vector3f& surfaceNormal,
 	_Out_ Eigen::Vector3f& reflectedRay,
 	_Out_ Eigen::Vector3f& refractedRay,
 	_Out_ Eigen::Vector3f& colour)
 {
 	float dot = ray.dot(normal);
+	surfaceNormal = this->normal;
 
 	if (dot != 0)
 	{
@@ -197,6 +217,13 @@ bool Plane::DoesRayIntersect(
 	}
 
 	return false;
+}
+
+Eigen::Vector3f Plane::GetSurfaceNormalAtPoint(
+	_In_ Eigen::Vector3f& point)
+{
+	point;
+	return this->normal;
 }
 
 std::ostream& operator << (std::ostream& os, const Plane& p)

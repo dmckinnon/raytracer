@@ -28,7 +28,7 @@ PointLight::PointLight(
 {
 	this->position = position;
 	this->colour = colour;
-	if (intensity >= 0 && intensity <= 1)
+	if (intensity >= 0)
 	{
 		this->intensity = intensity;
 	}
@@ -41,7 +41,7 @@ void PointLight::SetLight(
 {
 	this->position = position;
 	this->colour = colour;
-	if (intensity >= 0 && intensity <= 1)
+	if (intensity >= 0)
 	{
 		this->intensity = intensity;
 	}

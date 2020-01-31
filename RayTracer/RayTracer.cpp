@@ -18,7 +18,7 @@ using namespace Eigen;
 const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 
 // TODO define this in a better spot
-#define MAX_SCENE_DEPTH 10;
+#define MAX_SCENE_DEPTH 10
 
 /*
 	This is an exercise in ray tracing/ray marching/path tracing/whatever. 
@@ -44,11 +44,6 @@ const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 	- read in any shape as base class
 	- reflections/refractions/shadows etc
 	- ambient + diffuse + specular
-	- lighting
-
-	BUG:
-	- all spheres have the same colour
-	- planes are not rendering
 
 */
 
@@ -253,8 +248,11 @@ bool RenderScene(
 	// This will be the image
 	vector<Vector3f> frameBuffer(params.width*params.height);
 	const float fov = (3.141592 / 180.f) * (float)params.fov;
-	float width = (float)params.width;
-	float height = (float)params.height;
+	const float width = (float)params.width;
+	const float height = (float)params.height;
+	vector<Light*> lights = scene.GetLights();
+	vector<Shape*> shapes = scene.GetShapes();
+	Vector3f backgroundColour = scene.GetBackground();
 
 	// Send rays from each pixel, checking over all shapes for collisions
 	// TODO: hold shapes in an oct-tree, or similar, to make this more efficient
@@ -265,29 +263,54 @@ bool RenderScene(
 		for (int w = 0; w < params.width; ++w)
 		{
 			// get x and y from field of view equation
-			float x = (2 * (w + 0.5) / width - 1) * tan(fov / 2.) * width / height;
-			float y = -(2 * (h + 0.5) / height - 1) * tan(fov / 2.);
+			const float x = (2 * (w + 0.5) / width - 1) * tan(fov / 2.) * width / height;
+			const float y = -(2 * (h + 0.5) / height - 1) * tan(fov / 2.);
 			Vector3f ray(x, y, 1.f);
 			ray.normalize();
 
-			Vector3f colour = scene.GetBackground();
+			Vector3f colour = backgroundColour;
+			Vector3f surfaceNormal(0, 0, 0);
 			float closestDist = MAX_SCENE_DEPTH;
-			vector<Shape*> shapes = scene.GetShapes();
-			for (auto s : shapes)
+			int closestShapeIndex = -1;
+			for (int i = 0; i < shapes.size(); ++i)
 			{
-				float distance;
-				Vector3f reflect, refract, curColour = NO_COLOUR;
-				if (s->DoesRayIntersect(ray, distance, reflect, refract, curColour))
+				auto& s = shapes[i];
+				float distance = MAX_SCENE_DEPTH;
+				Vector3f reflect, refract, normal, curColour = NO_COLOUR;
+				if (s->DoesRayIntersect(ray, distance, normal, reflect, refract, curColour))
 				{
 					if (distance < closestDist)
 					{
-						colour = curColour;
+						colour = Vector3f(curColour[0], curColour[1], curColour[2]);
 						closestDist = distance;
+						closestShapeIndex = i;
+						surfaceNormal = normal;
 					}
 				}
 			}
 
-			frameBuffer[w + h * params.width] = colour;
+			if (closestShapeIndex != -1)
+			{
+				// Why can't we have a multi channel colour here?
+
+				// Now get diffuse light intensity to scale colour
+				// the point of intersection with the surface
+				// is the computed distance along the given ray
+				float diffuseIntensity = 0;
+				for (auto& l : lights)
+				{
+					Vector3f point = closestDist * ray;
+					Vector3f lightDir = l->GetPosition() - point;
+					lightDir.normalize();
+					surfaceNormal.normalize();
+					diffuseIntensity += l->GetIntensity() * max(0.f, lightDir.dot(surfaceNormal));
+					// TODO: drop intensity off with distance squared
+				}
+
+				colour = diffuseIntensity * colour;
+			}
+
+			frameBuffer[w + h * params.width] = Vector3f(colour[0], colour[1], colour[2]);
 		}
 	}
 
