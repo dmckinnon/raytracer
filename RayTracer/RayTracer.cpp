@@ -45,6 +45,9 @@ const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 	- reflections/refractions/shadows etc
 	- ambient + diffuse + specular
 
+	Bug:
+	- even with just showing lighting angle, it still shifts. Something in calculating the lighting angle it's 
+	  changing vectors
 */
 
 /* ---------- Structures ----------- */
@@ -68,6 +71,10 @@ bool WriteImageToFile(
 bool RenderScene(
 	_In_ Scene& scene,
 	_In_ const Params& params);
+
+Vector3f CastRay(
+	_In_ const Vector3f& ray,
+	_In_ Scene scene);
 
 /* ------ Main --------*/
 // Read in the scene to render
@@ -205,12 +212,14 @@ bool WriteImageToFile(
 	_In_ const Params& params)
 {
 	ofstream ofs; // save the framebuffer to file
-	ofs.open(params.outputFile, fstream::out);
+	ofs.open(params.outputFile, std::ofstream::out | std::ofstream::binary);
 	if (ofs.is_open())
 	{
 		ofs << "P6\n" << params.width << " " << params.height << "\n255\n";
-		for (int i = 0; i < params.height * params.width; ++i) {
-			for (int j = 0; j < 3; j++) {
+		for (int i = 0; i < params.height * params.width; ++i)
+		{
+			for (int j = 0; j < 3; ++j)
+			{
 				ofs << (char)(255 * std::max(0.f, std::min(1.f, frameBuffer[i](j))));
 			}
 		}
@@ -250,9 +259,6 @@ bool RenderScene(
 	const float fov = (3.141592 / 180.f) * (float)params.fov;
 	const float width = (float)params.width;
 	const float height = (float)params.height;
-	vector<Light*> lights = scene.GetLights();
-	vector<Shape*> shapes = scene.GetShapes();
-	Vector3f backgroundColour = scene.GetBackground();
 
 	// Send rays from each pixel, checking over all shapes for collisions
 	// TODO: hold shapes in an oct-tree, or similar, to make this more efficient
@@ -268,51 +274,81 @@ bool RenderScene(
 			Vector3f ray(x, y, 1.f);
 			ray.normalize();
 
-			Vector3f colour = backgroundColour;
-			Vector3f surfaceNormal(0, 0, 0);
-			float closestDist = MAX_SCENE_DEPTH;
-			int closestShapeIndex = -1;
-			for (int i = 0; i < shapes.size(); ++i)
-			{
-				auto& s = shapes[i];
-				float distance = MAX_SCENE_DEPTH;
-				Vector3f reflect, refract, normal, curColour = NO_COLOUR;
-				if (s->DoesRayIntersect(ray, distance, normal, reflect, refract, curColour))
-				{
-					if (distance < closestDist)
-					{
-						colour = Vector3f(curColour[0], curColour[1], curColour[2]);
-						closestDist = distance;
-						closestShapeIndex = i;
-						surfaceNormal = normal;
-					}
-				}
-			}
-
-			if (closestShapeIndex != -1)
-			{
-				// Why can't we have a multi channel colour here?
-
-				// Now get diffuse light intensity to scale colour
-				// the point of intersection with the surface
-				// is the computed distance along the given ray
-				float diffuseIntensity = 0;
-				for (auto& l : lights)
-				{
-					Vector3f point = closestDist * ray;
-					Vector3f lightDir = l->GetPosition() - point;
-					lightDir.normalize();
-					surfaceNormal.normalize();
-					diffuseIntensity += l->GetIntensity() * max(0.f, lightDir.dot(surfaceNormal));
-					// TODO: drop intensity off with distance squared
-				}
-
-				colour = diffuseIntensity * colour;
-			}
-
+			Vector3f colour = CastRay(ray, scene);
 			frameBuffer[w + h * params.width] = Vector3f(colour[0], colour[1], colour[2]);
 		}
 	}
 
 	return WriteImageToFile(frameBuffer, params);
+}
+
+/*
+	Cast a single ray into a scene
+
+	This checks all shapes for collisions, and does lighting equations. Returns a colour
+*/
+Vector3f CastRay(
+	_In_ const Vector3f& ray,
+	_In_ Scene scene)
+{
+	vector<Light*> lights = scene.GetLights();
+	vector<Shape*> shapes = scene.GetShapes();
+
+	Vector3f colour = scene.GetBackground();
+
+	Vector3f surfaceNormal(0, 0, 0);
+	float closestDist = MAX_SCENE_DEPTH;
+	int closestShapeIndex = -1;
+	for (int i = 0; i < shapes.size(); ++i)
+	{
+		const auto s = shapes[i];
+		float distance = MAX_SCENE_DEPTH;
+		Vector3f reflect, refract, normal, curColour = NO_COLOUR;
+		if (s->DoesRayIntersect(ray, distance, normal, reflect, refract, curColour))
+		{
+			if (distance < closestDist)
+			{
+				colour = Vector3f(curColour[0], curColour[1], curColour[2]);
+				closestDist = distance;
+				closestShapeIndex = i;
+				surfaceNormal = Vector3f(normal[0], normal[1], normal[2]);
+			}
+		}
+	}
+
+
+	// Somewhere in this function we are leaking
+	// It's something to do with the light position vector?
+	// How to test this though ... 
+	// or the flipping surface normal but I doubt it
+	if (closestShapeIndex != -1)
+	{
+		// Why can't we have a multi channel colour here?
+		// can't even have just grayscale
+		// grayscale removes the banding, but still has the shifting
+		// something here is modifying the ... sphere? Light position?
+		// whatever is changing it is somehow related to angle?
+
+		// Now get diffuse light intensity to scale colour
+		// the point of intersection with the surface
+		// is the computed distance along the given ray
+		//cout << "Sphere: " << endl << *(shapes[0]) << endl;
+		float diffuseIntensity = 0;
+		for (const auto l : lights)
+		{
+			Vector3f point = closestDist * ray;
+			Vector3f lightDir = l->GetPosition() - point;
+			lightDir /= lightDir.norm();
+			surfaceNormal /= surfaceNormal.norm();
+			float angle = lightDir[0] * lightDir.dot(surfaceNormal);
+
+			// angle needs to take into account full circle
+
+			diffuseIntensity += l->GetIntensity() * max(0.f, angle);
+		}
+
+		colour = Vector3f(diffuseIntensity, 0, 0);// diffuseIntensity* colour;
+	}
+
+	return colour;
 }

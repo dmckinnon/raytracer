@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include <string>
 #include <fstream>
+#include <iostream>
 
 using namespace Eigen;
 using namespace std;
@@ -101,7 +102,8 @@ bool Sphere::DoesRayIntersect(
 		// Dummy rays for now
 		reflectedRay = Vector3f(0,0,0);
 		refractedRay = Vector3f(0, 0, 0);
-		surfaceNormal = distance*ray - centre;
+		Vector3f normal = distance*ray - centre;
+		surfaceNormal = Vector3f(normal[0], normal[1], normal[2]);
 		
 		colour = this->colour;
 		return true;
