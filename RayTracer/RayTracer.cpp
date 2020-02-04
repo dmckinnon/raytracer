@@ -46,8 +46,7 @@ const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
 	- ambient + diffuse + specular
 
 	Bug:
-	- even with just showing lighting angle, it still shifts. Something in calculating the lighting angle it's 
-	  changing vectors
+	- light position isn't lining up with what's showing
 */
 
 /* ---------- Structures ----------- */
@@ -316,23 +315,8 @@ Vector3f CastRay(
 		}
 	}
 
-
-	// Somewhere in this function we are leaking
-	// It's something to do with the light position vector?
-	// How to test this though ... 
-	// or the flipping surface normal but I doubt it
 	if (closestShapeIndex != -1)
 	{
-		// Why can't we have a multi channel colour here?
-		// can't even have just grayscale
-		// grayscale removes the banding, but still has the shifting
-		// something here is modifying the ... sphere? Light position?
-		// whatever is changing it is somehow related to angle?
-
-		// Now get diffuse light intensity to scale colour
-		// the point of intersection with the surface
-		// is the computed distance along the given ray
-		//cout << "Sphere: " << endl << *(shapes[0]) << endl;
 		float diffuseIntensity = 0;
 		for (const auto l : lights)
 		{
@@ -340,14 +324,10 @@ Vector3f CastRay(
 			Vector3f lightDir = l->GetPosition() - point;
 			lightDir /= lightDir.norm();
 			surfaceNormal /= surfaceNormal.norm();
-			float angle = lightDir[0] * lightDir.dot(surfaceNormal);
-
-			// angle needs to take into account full circle
-
-			diffuseIntensity += l->GetIntensity() * max(0.f, angle);
+			diffuseIntensity += l->GetIntensity() * max(0.f, lightDir.dot(surfaceNormal));
 		}
 
-		colour = Vector3f(diffuseIntensity, 0, 0);// diffuseIntensity* colour;
+		colour = diffuseIntensity* colour;
 	}
 
 	return colour;
