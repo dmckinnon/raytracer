@@ -22,9 +22,9 @@ PointLight::PointLight()
 }
 
 PointLight::PointLight(
-	_In_ const Eigen::Vector3f& position,
-	_In_ const Eigen::Vector3f& colour,
-	_In_ const float& intensity)
+	const Eigen::Vector3f& position,
+	const Eigen::Vector3f& colour,
+	const float& intensity)
 {
 	this->position = position;
 	this->colour = colour;
@@ -35,9 +35,9 @@ PointLight::PointLight(
 }
 
 void PointLight::SetLight(
-	_In_ const Eigen::Vector3f& position,
-	_In_ const Eigen::Vector3f& colour,
-	_In_ const float& intensity)
+	const Eigen::Vector3f& position,
+	const Eigen::Vector3f& colour,
+	const float& intensity)
 {
 	this->position = position;
 	this->colour = colour;

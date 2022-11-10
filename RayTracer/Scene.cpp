@@ -14,17 +14,17 @@ using namespace std;
 	"no colour" - that is, it does not influence the colour
 	of objects beyond shadowing, etc
 */
-void Scene::AddShape(_In_ Shape* shape)
+void Scene::AddShape(Shape* shape)
 {
 	shapes.push_back(shape);
 }
 
-void Scene::AddLight(_In_ Light* light)
+void Scene::AddLight(Light* light)
 {
 	lights.push_back(light);
 }
 
-void Scene::SetBackground(_In_ Eigen::Vector3f& colour)
+void Scene::SetBackground(Eigen::Vector3f& colour)
 {
 	backgroundColour = colour;
 }
@@ -93,8 +93,8 @@ std::istream & operator >> (std::istream & is, Scene& scene)
 	Read a scene from a file
 */
 bool ReadScene(
-	_In_ const string& sceneFile,
-	_Out_ Scene& scene)
+	const string& sceneFile,
+	Scene& scene)
 {
 	ifstream file;
 	file.open(sceneFile);

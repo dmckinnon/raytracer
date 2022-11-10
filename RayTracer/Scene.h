@@ -33,15 +33,15 @@ public:
 
 	// This has an equation defined somehow?
 	virtual bool DoesRayIntersect(
-		_In_ Eigen::Vector3f ray,
-		_Out_ float& distance,
-		_Out_ Eigen::Vector3f& surfaceNormal,
-		_Out_ Eigen::Vector3f& reflectedRay,
-		_Out_ Eigen::Vector3f& refractedRay,
-		_Out_ Eigen::Vector3f& colour) = 0;
+		Eigen::Vector3f ray,
+		float& distance,
+		Eigen::Vector3f& surfaceNormal,
+		Eigen::Vector3f& reflectedRay,
+		Eigen::Vector3f& refractedRay,
+		Eigen::Vector3f& colour) = 0;
 
 	virtual Eigen::Vector3f GetSurfaceNormalAtPoint(
-	    _In_ Eigen::Vector3f& point) = 0;
+	    Eigen::Vector3f& point) = 0;
 
 protected:
 };
@@ -57,14 +57,14 @@ public:
 
 	// other constructors
 
-	void AddShape(_In_ Shape* shape);
-	void AddLight(_In_ Light* light);
+	void AddShape(Shape* shape);
+	void AddLight(Light* light);
 
 	std::vector<Shape*> GetShapes() { return shapes; };
 	std::vector<Light*> GetLights() { return lights; };
 
 	// Currently backgrounds are just colours, nothing fancier
-	void SetBackground(_In_ Eigen::Vector3f& colour);
+	void SetBackground(Eigen::Vector3f& colour);
 	Eigen::Vector3f GetBackground();
 
 	// What else does a scene have? Objects and lighting, really
@@ -88,18 +88,18 @@ class PointLight : public Light
 public:
 	PointLight();
 	PointLight(
-		_In_ const Eigen::Vector3f& position,
-		_In_ const Eigen::Vector3f& colour,
-		_In_ const float& intensity);
+		const Eigen::Vector3f& position,
+		const Eigen::Vector3f& colour,
+		const float& intensity);
 	~PointLight() {};
 
 	Eigen::Vector3f GetPosition() override;
 	float GetIntensity() override;
 
 	void SetLight(
-		_In_ const Eigen::Vector3f& position,
-		_In_ const Eigen::Vector3f& colour,
-		_In_ const float& intensity);
+		const Eigen::Vector3f& position,
+		const Eigen::Vector3f& colour,
+		const float& intensity);
 
 	// IO overloads
 	friend std::ostream& operator << (std::ostream& os, const PointLight& pl);
@@ -122,23 +122,23 @@ class Sphere : public Shape
 {
 public:
 	Sphere();
-	Sphere(_In_ const Eigen::Vector3f& centre, _In_ const Eigen::Vector3f& colour, _In_ const float r);
+	Sphere(const Eigen::Vector3f& centre, const Eigen::Vector3f& colour, const float r);
 	~Sphere();
 
 	bool DoesRayIntersect(
-		_In_ Eigen::Vector3f ray,
-		_Out_ float& distance,
-		_Out_ Eigen::Vector3f& surfaceNormal,
-		_Out_ Eigen::Vector3f& reflectedRay,
-		_Out_ Eigen::Vector3f& refractedRay,
-		_Out_ Eigen::Vector3f& colour) override;
+		Eigen::Vector3f ray,
+		float& distance,
+		Eigen::Vector3f& surfaceNormal,
+		Eigen::Vector3f& reflectedRay,
+		Eigen::Vector3f& refractedRay,
+		Eigen::Vector3f& colour) override;
 
 	Eigen::Vector3f GetSurfaceNormalAtPoint(
-		_In_ Eigen::Vector3f& point) override;
+		Eigen::Vector3f& point) override;
 
-	void SetSphere(_In_ const Eigen::Vector3f& centre,
-		_In_ const Eigen::Vector3f& colour,
-		_In_ const float r);
+	void SetSphere(const Eigen::Vector3f& centre,
+		const Eigen::Vector3f& colour,
+		const float r);
 
 	Eigen::Vector3f GetCentre() { return centre; };
 	float           GetRadius() { return radius; };
@@ -160,23 +160,23 @@ class Plane : public Shape
 {
 public:
 	Plane();
-	Plane(_In_ const Eigen::Vector3f& normal, _In_ const float& offset, _In_ const Eigen::Vector3f& colour);
+	Plane(const Eigen::Vector3f& normal, const float& offset, const Eigen::Vector3f& colour);
 	~Plane() {};
 
 	bool DoesRayIntersect(
-		_In_ Eigen::Vector3f ray,
-		_Out_ float& distance,
-		_Out_ Eigen::Vector3f& surfaceNormal,
-		_Out_ Eigen::Vector3f& reflectedRay,
-		_Out_ Eigen::Vector3f& refractedRay,
-		_Out_ Eigen::Vector3f& colour) override;
+		Eigen::Vector3f ray,
+		float& distance,
+		Eigen::Vector3f& surfaceNormal,
+		Eigen::Vector3f& reflectedRay,
+		Eigen::Vector3f& refractedRay,
+		Eigen::Vector3f& colour) override;
 
 	Eigen::Vector3f GetSurfaceNormalAtPoint(
-		_In_ Eigen::Vector3f& point) override;
+		Eigen::Vector3f& point) override;
 
-	void SetPlane(_In_ const Eigen::Vector3f& normal,
-		_In_ const float& offset,
-		_In_ const Eigen::Vector3f& colour);
+	void SetPlane(const Eigen::Vector3f& normal,
+		const float& offset,
+		const Eigen::Vector3f& colour);
 
 	// IO overloads
 	friend std::ostream& operator << (std::ostream& os, const Plane& s);
@@ -193,5 +193,5 @@ private:
 // Some general scene functions
 
 bool ReadScene(
-	_In_ const std::string& sceneFile,
-	_Out_ Scene& scene);
+	const std::string& sceneFile,
+	Scene& scene);

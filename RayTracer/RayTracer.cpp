@@ -61,19 +61,19 @@ struct Params
 
 /* ---------- Function prototypes -------------- */
 void FailBadArgs();
-bool ParseArgs(_In_ const int argc, _In_ char** argv, _Out_ Params& params);
+bool ParseArgs(const int argc, char** argv, Params& params);
 
 bool WriteImageToFile(
-	_In_ const vector<Vector3f>& frameBuffer,
-	_In_ const Params& params);
+	const vector<Vector3f>& frameBuffer,
+	const Params& params);
 
 bool RenderScene(
-	_In_ Scene& scene,
-	_In_ const Params& params);
+	Scene& scene,
+	const Params& params);
 
 Vector3f CastRay(
-	_In_ const Vector3f& ray,
-	_In_ Scene scene);
+	const Vector3f& ray,
+	Scene scene);
 
 /* ------ Main --------*/
 // Read in the scene to render
@@ -148,7 +148,7 @@ void FailBadArgs()
 /*
 	... Parse args
 */
-bool ParseArgs(_In_ const int argc, _In_ char** argv, _Out_ Params& params)
+bool ParseArgs(const int argc, char** argv, Params& params)
 {
 	for (int i = 1; i < argc; ++i)
 	{
@@ -207,8 +207,8 @@ bool ParseArgs(_In_ const int argc, _In_ char** argv, _Out_ Params& params)
 	https://github.com/ssloy/tinyraytracer/wiki/Part-1:-understandable-raytracing
 */
 bool WriteImageToFile(
-	_In_ const vector<Vector3f>& frameBuffer,
-	_In_ const Params& params)
+	const vector<Vector3f>& frameBuffer,
+	const Params& params)
 {
 	ofstream ofs; // save the framebuffer to file
 	ofs.open(params.outputFile, std::ofstream::out | std::ofstream::binary);
@@ -250,8 +250,8 @@ bool WriteImageToFile(
 	but keep quality
 */
 bool RenderScene(
-	_In_ Scene& scene,
-	_In_ const Params& params)
+	Scene& scene,
+	const Params& params)
 {
 	// This will be the image
 	vector<Vector3f> frameBuffer(params.width*params.height);
@@ -287,8 +287,8 @@ bool RenderScene(
 	This checks all shapes for collisions, and does lighting equations. Returns a colour
 */
 Vector3f CastRay(
-	_In_ const Vector3f& ray,
-	_In_ Scene scene)
+	const Vector3f& ray,
+	Scene scene)
 {
 	vector<Light*> lights = scene.GetLights();
 	vector<Shape*> shapes = scene.GetShapes();

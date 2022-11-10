@@ -22,9 +22,9 @@ Sphere::Sphere()
 }
 
 Sphere::Sphere(
-	_In_ const Eigen::Vector3f& centre,
-	_In_ const Eigen::Vector3f& colour,
-	_In_ const float r)
+	const Eigen::Vector3f& centre,
+	const Eigen::Vector3f& colour,
+	const float r)
 {
 	this->centre = centre;
 	this->colour = colour;
@@ -35,9 +35,9 @@ Sphere::~Sphere()
 {
 }
 
-void Sphere::SetSphere(_In_ const Eigen::Vector3f& centre,
-	_In_ const Eigen::Vector3f& colour,
-	_In_ const float r)
+void Sphere::SetSphere( const Eigen::Vector3f& centre,
+	const Eigen::Vector3f& colour,
+	const float r)
 {
 	this->centre = centre;
 	this->colour = colour;
@@ -58,12 +58,12 @@ void Sphere::SetSphere(_In_ const Eigen::Vector3f& centre,
 	// TODO this should return surface normal at this point
 */
 bool Sphere::DoesRayIntersect(
-	_In_ Eigen::Vector3f ray,
-	_Out_ float& distance,
-	_Out_ Eigen::Vector3f& surfaceNormal,
-	_Out_ Eigen::Vector3f& reflectedRay,
-	_Out_ Eigen::Vector3f& refractedRay,
-	_Out_ Eigen::Vector3f& colour)
+	 Eigen::Vector3f ray,
+	float& distance,
+	Eigen::Vector3f& surfaceNormal,
+	Eigen::Vector3f& reflectedRay,
+	Eigen::Vector3f& refractedRay,
+	Eigen::Vector3f& colour)
 {
 	// sanity check
 	if (radius == BAD_RADIUS)
@@ -114,7 +114,7 @@ bool Sphere::DoesRayIntersect(
 }
 
 Eigen::Vector3f Sphere::GetSurfaceNormalAtPoint(
-	_In_ Eigen::Vector3f& point)
+	Eigen::Vector3f& point)
 {
 	// TODO: confirm point is on the surface
 	Vector3f radial = point - this->centre;
@@ -158,9 +158,9 @@ Plane::Plane()
 }
 
 Plane::Plane(
-	_In_ const Eigen::Vector3f& normal,
-	_In_ const float& offset,
-	_In_ const Eigen::Vector3f& colour)
+	 const Eigen::Vector3f& normal,
+	 const float& offset,
+	 const Eigen::Vector3f& colour)
 {
 	this->normal = normal;
 	this->offset = offset;
@@ -168,9 +168,9 @@ Plane::Plane(
 }
 
 void Plane::SetPlane(
-	_In_ const Eigen::Vector3f& normal,
-	_In_ const float& offset,
-	_In_ const Eigen::Vector3f& colour)
+	 const Eigen::Vector3f& normal,
+	 const float& offset,
+	 const Eigen::Vector3f& colour)
 {
 	this->normal = normal;
 	this->offset = offset;
@@ -190,12 +190,12 @@ void Plane::SetPlane(
 	Reflection and refraction follow easily too. 
 */
 bool Plane::DoesRayIntersect(
-	_In_ Eigen::Vector3f ray,
-	_Out_ float& distance,
-	_Out_ Eigen::Vector3f& surfaceNormal,
-	_Out_ Eigen::Vector3f& reflectedRay,
-	_Out_ Eigen::Vector3f& refractedRay,
-	_Out_ Eigen::Vector3f& colour)
+	 Eigen::Vector3f ray,
+	float& distance,
+	Eigen::Vector3f& surfaceNormal,
+	Eigen::Vector3f& reflectedRay,
+	Eigen::Vector3f& refractedRay,
+	Eigen::Vector3f& colour)
 {
 	float dot = ray.dot(normal);
 	surfaceNormal = this->normal;
@@ -221,10 +221,9 @@ bool Plane::DoesRayIntersect(
 	return false;
 }
 
-Eigen::Vector3f Plane::GetSurfaceNormalAtPoint(
-	_In_ Eigen::Vector3f& point)
+Eigen::Vector3f Plane::GetSurfaceNormalAtPoint([[maybe_unused]]Eigen::Vector3f& point)
 {
-	point;
+	//point;
 	return this->normal;
 }
 
