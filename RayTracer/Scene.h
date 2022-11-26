@@ -25,20 +25,31 @@ protected:
 
 };
 
+// THis struct stores the collision of light with a shape.
+// It contains the point where the light hit,
+// the surface normal, any reflections or refractions, the colour,
+// and whether the light was on the back face or front face.
+struct LightCollision
+{
+	Eigen::Vector3f point;
+	Eigen::Vector3f surfaceNormal;
+	Eigen::Vector3f reflectedRay;
+	Eigen::Vector3f refractedRay;
+	Eigen::Vector3f colour;
+
+	bool frontFace;
+};
+
 class Shape
 {
 public:
-	//Shape();
 	virtual ~Shape() {};
 
 	// This has an equation defined somehow?
 	virtual bool DoesRayIntersect(
 		Eigen::Vector3f ray,
 		float& distance,
-		Eigen::Vector3f& surfaceNormal,
-		Eigen::Vector3f& reflectedRay,
-		Eigen::Vector3f& refractedRay,
-		Eigen::Vector3f& colour) = 0;
+		LightCollision& collision) = 0;
 
 	virtual Eigen::Vector3f GetSurfaceNormalAtPoint(
 	    Eigen::Vector3f& point) = 0;
@@ -128,10 +139,7 @@ public:
 	bool DoesRayIntersect(
 		Eigen::Vector3f ray,
 		float& distance,
-		Eigen::Vector3f& surfaceNormal,
-		Eigen::Vector3f& reflectedRay,
-		Eigen::Vector3f& refractedRay,
-		Eigen::Vector3f& colour) override;
+		LightCollision& collision) override;
 
 	Eigen::Vector3f GetSurfaceNormalAtPoint(
 		Eigen::Vector3f& point) override;
@@ -166,10 +174,7 @@ public:
 	bool DoesRayIntersect(
 		Eigen::Vector3f ray,
 		float& distance,
-		Eigen::Vector3f& surfaceNormal,
-		Eigen::Vector3f& reflectedRay,
-		Eigen::Vector3f& refractedRay,
-		Eigen::Vector3f& colour) override;
+		LightCollision& collision) override;
 
 	Eigen::Vector3f GetSurfaceNormalAtPoint(
 		Eigen::Vector3f& point) override;

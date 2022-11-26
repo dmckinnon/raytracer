@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <assert.h>
 
 using namespace Eigen;
 using namespace std;
@@ -54,16 +55,11 @@ void Sphere::SetSphere( const Eigen::Vector3f& centre,
 
 	One thing we should probably also return is the angle of striking
 	so as to allow for computing the reflections easier
-
-	// TODO this should return surface normal at this point
 */
 bool Sphere::DoesRayIntersect(
-	 Eigen::Vector3f ray,
+	Eigen::Vector3f ray,
 	float& distance,
-	Eigen::Vector3f& surfaceNormal,
-	Eigen::Vector3f& reflectedRay,
-	Eigen::Vector3f& refractedRay,
-	Eigen::Vector3f& colour)
+	LightCollision& collision)
 {
 	// sanity check
 	if (radius == BAD_RADIUS)
@@ -99,13 +95,43 @@ bool Sphere::DoesRayIntersect(
 			// pc - p = projection of centre onto ray, minus ray origin = projection = proj.norm()
 		}
 
-		// Dummy rays for now
-		reflectedRay = Vector3f(0,0,0);
-		refractedRay = Vector3f(0, 0, 0);
-		Vector3f normal = distance*ray - centre;
-		surfaceNormal = Vector3f(normal[0], normal[1], normal[2]);
+		collision.point = ray*distance;
+
+		// To get surface normal at the surface, we get the ray from the centre of the
+		// sphere to the collision point, and since this is by definition a radius, we
+		// can extend it out. 
+		// 2* this ray - this ray means we get the ray of length radius that goes from the surface
+		// outward in the direction of the normal.
+		// This does make the assumption that the ray comes from without, not within.
+		// However, it should still work in either case.
+		// store whether ray is on inside or outside
+		Vector3f centreToIntersectPoint = distance*ray - centre;
+		Vector3f normal = 2*centreToIntersectPoint - centreToIntersectPoint;
+		// return a unit vector for the normal
+		collision.surfaceNormal = normal / normal.norm();
+		collision.frontFace = (ray.dot(collision.surfaceNormal) < 0.0);
+
+		// Get reflectedRay
+		// We need the incoming ray to be facing away from the surface
+		auto incomingRay = -ray;
+		// Make sure the normal is the same side as the incoming ray
+		if (!collision.frontFace)
+		{
+			normal = -1*normal;
+		}
+		// projet incoming ray onto surface normal
+		proj = incomingRay.dot(normal) * normal;
+		// Get the vector from incoming ray to the projection, and double it
+		// to get the equivalent reflected on the other side of the normal
+		auto projectionFromIncoming = proj - incomingRay;
+		collision.reflectedRay = incomingRay + 2*projectionFromIncoming;
+		collision.reflectedRay.normalize();
+
+		// For refraction, get the incoming angle.
+		//auto cosTheta = normal.dot(incomingRay)/(normal.norm()*incomingRay.norm());
+		// this requires an index of refraction
 		
-		colour = this->colour;
+		collision.colour = this->colour;
 		return true;
 	}
 
@@ -116,8 +142,8 @@ bool Sphere::DoesRayIntersect(
 Eigen::Vector3f Sphere::GetSurfaceNormalAtPoint(
 	Eigen::Vector3f& point)
 {
-	// TODO: confirm point is on the surface
 	Vector3f radial = point - this->centre;
+	assert(abs(radial.norm() - radius) < 0.001);
 	Vector3f surfaceNormal = 2 * radial - radial;
 	return surfaceNormal;
 }
@@ -192,13 +218,10 @@ void Plane::SetPlane(
 bool Plane::DoesRayIntersect(
 	 Eigen::Vector3f ray,
 	float& distance,
-	Eigen::Vector3f& surfaceNormal,
-	Eigen::Vector3f& reflectedRay,
-	Eigen::Vector3f& refractedRay,
-	Eigen::Vector3f& colour)
+	LightCollision& collision)
 {
 	float dot = ray.dot(normal);
-	surfaceNormal = this->normal;
+	collision.surfaceNormal = this->normal;
 
 	if (dot != 0)
 	{
@@ -212,9 +235,27 @@ bool Plane::DoesRayIntersect(
 			return false;
 		}
 
-		colour = this->colour;
+		collision.colour = this->colour;
+		collision.point = ray*distance;
+		collision.frontFace = collision.surfaceNormal.dot(ray) < 0.0;
 
-		// solve for reflected and refracted rays etc
+		// Get reflectedRay
+		// We need the incoming ray to be facing away from the surface
+		auto incomingRay = -1*ray;
+		// Make sure the normal is the same side as the incoming ray
+		auto norm = this->normal;
+		if (!collision.frontFace)
+		{
+			norm = -1*norm;
+		}
+		// projet incoming ray onto surface normal
+		auto proj = incomingRay.dot(norm) * norm;
+		// Get the vector from incoming ray to the projection, and double it
+		// to get the equivalent reflected on the other side of the normal
+		auto projectionFromIncoming = proj - incomingRay;
+		collision.reflectedRay = incomingRay + 2*projectionFromIncoming;
+		collision.reflectedRay.normalize();
+
 		return true;
 	}
 
@@ -223,7 +264,7 @@ bool Plane::DoesRayIntersect(
 
 Eigen::Vector3f Plane::GetSurfaceNormalAtPoint([[maybe_unused]]Eigen::Vector3f& point)
 {
-	//point;
+	// This is not a unit normal
 	return this->normal;
 }
 
