@@ -9,6 +9,8 @@
 #include <limits>
 #include <cmath>
 #include <eigen3/Eigen/Dense>
+#include <random>
+
 #include "Scene.h"
 #include "UnitTests.h"
 //#include "geometry.h"
@@ -43,15 +45,14 @@ const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
     My convention is x and y form the camera coords, and z is away from the camera
 
     TODO: 
-    - read in any shape as base class - follow tutorial
-    - refractions
-    - ambient + diffuse + specular
+    - Antialiasing random angles are too broad
 
     Next
     - unit test to check surface normals
     - unit test to check reflection code
             started on these
     - Antialiasing
+    - refactor to have config as part of scene? Or two files?
 
     Bug:
     - light position isn't lining up with what's showing
@@ -65,6 +66,8 @@ struct Params
     int width = 640;
     int height = 480;
     int fov = 90;
+
+    int samplesPerPixel = 1;
 
     bool runUnitTests;
 };
@@ -84,6 +87,8 @@ bool RenderScene(
 Vector3f CastRay(
     const Vector3f& ray,
     Scene scene);
+
+inline double random_double();
 
 /* ------ Main --------*/
 // Read in the scene to render
@@ -141,6 +146,7 @@ void FailBadArgs()
     cout << "-h <int>                       : image height" << endl;
     cout << "-w <int>                       : image width" << endl;
     cout << "-f <int>                       : field of view in degrees" << endl;
+    cout << "-s <int>                       : samples per pixel" << endl;
     cout << "-i <input_scene_filename>      : contains the scene to be rendered." << endl;
     cout << "-o <output_image_filename>     : name of .ppm file to save output to." << endl;
     cout << "-u                             : runs unit tests instead of rendering image." << endl;
@@ -204,6 +210,16 @@ bool ParseArgs(const int argc, char** argv, Params& params)
                 return false;
             }
         }
+        else if (strcmp("-s", argv[i]) == 0)
+        {
+            params.samplesPerPixel = stoi(argv[++i]);
+            if (params.samplesPerPixel< 1)
+            {
+                cout << "Bad argument!" << endl;
+                FailBadArgs();
+                return false;
+            }
+        }
         else if (strcmp("-u", argv[i]) == 0)
         {
             params.runUnitTests = true;
@@ -216,6 +232,12 @@ bool ParseArgs(const int argc, char** argv, Params& params)
         }
     }
     return true;
+}
+
+inline double random_double() {
+    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    static std::mt19937 generator;
+    return distribution(generator);
 }
 
 /*
@@ -277,6 +299,9 @@ bool RenderScene(
     const float width = (float)params.width;
     const float height = (float)params.height;
 
+    float oneHorizontalPixel = (2 * (1 + 0.5) / width - 1) * tan(fov / 2.) * width / height;
+    float oneVerticalPixel = -(2 * (1 + 0.5) / height - 1) * tan(fov / 2.);
+
     // Send rays from each pixel, checking over all shapes for collisions
     // TODO: hold shapes in an oct-tree, or similar, to make this more efficient
     // TODO: parallelise
@@ -288,11 +313,23 @@ bool RenderScene(
             // get x and y from field of view equation
             const float x = (2 * (w + 0.5) / width - 1) * tan(fov / 2.) * width / height;
             const float y = -(2 * (h + 0.5) / height - 1) * tan(fov / 2.);
-            Vector3f ray(x, y, 1.f);
-            ray.normalize();
+            auto finalColour = Vector3f(0, 0, 0);
+            for (int n = 0; n < params.samplesPerPixel; ++n)
+            {
+                // perturb x and y by an amount not larger than half a pixel
+                double r1 = random_double() - 0.5;
+                double r2 = random_double() - 0.5;
+                Vector3f ray(x+r1, y+r2, 1.f);
+                ray.normalize();
 
-            Vector3f colour = CastRay(ray, scene);
-            frameBuffer[w + h * params.width] = Vector3f(colour[0], colour[1], colour[2]);
+                // Accumulate the colour over all sampled rays
+                finalColour += CastRay(ray, scene);
+            }
+
+            // Get the average pixel colour. Values are clamped when written out.
+            finalColour /= (float)params.samplesPerPixel;
+            
+            frameBuffer[w + h * params.width] = Vector3f(finalColour[0], finalColour[1], finalColour[2]);
         }
     }
 
