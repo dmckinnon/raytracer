@@ -1,7 +1,12 @@
 # raytracer
 
-Currently looking at photon mapping, then progressive photon mapping, then stochastic progressive photon mapping
-To know photon mapping, going through literature from scratch
+This project is learnign about ray tracing. I'm starting from a very low level, and implementing progressively more complicated algorithms by following a few tutorials and papers. The general idea is to start with the basics, then move to photon mapping, then progressive photon mapping, then stochastic progressive photon mapping. There's a lot of code infrastructure to get going around all this, so it moves slowly. 
+
+
+
+
+
+
 
 Need to learn now:
 monte carlo ray tracing
