@@ -20,16 +20,22 @@ Sphere::Sphere()
 	centre = Vector3f(0,0,0);
 	colour = Vector3f(0.5f, 0.5f, 0.5f);
 	radius = 1;
+
+	// default for now
+	diffusionFactor = 0.5f;
 }
 
 Sphere::Sphere(
 	const Eigen::Vector3f& centre,
 	const Eigen::Vector3f& colour,
+	Material& m,
 	const float r)
 {
 	this->centre = centre;
 	this->colour = colour;
 	this->radius = r;
+
+	this->material = m;
 }
 
 Sphere::~Sphere()
@@ -43,6 +49,11 @@ void Sphere::SetSphere( const Eigen::Vector3f& centre,
 	this->centre = centre;
 	this->colour = colour;
 	this->radius = r;
+}
+
+float Sphere::GetDiffusionFactor()
+{
+	return diffusionFactor;
 }
 
 /*
@@ -181,6 +192,9 @@ Plane::Plane()
 	normal = Vector3f(1, 0, 0);
 	colour = Vector3f(0.5f, 0.5f, 0.5f);
 	offset = 0.f;
+
+	// default for now
+	diffusionFactor = 0.5f;
 }
 
 Plane::Plane(
@@ -201,6 +215,11 @@ void Plane::SetPlane(
 	this->normal = normal;
 	this->offset = offset;
 	this->colour = colour;
+}
+
+float Plane::GetDiffusionFactor()
+{
+	return diffusionFactor;
 }
 
 /*

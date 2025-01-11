@@ -45,17 +45,16 @@ const Eigen::Vector3f NO_COLOUR = Vector3f(0.2, 0.2, 0.2);
     My convention is x and y form the camera coords, and z is away from the camera
 
     TODO: 
-    - Antialiasing random angles are too broad
-
-    Next
-    - unit test to check surface normals
-    - unit test to check reflection code
-            started on these
-    - Antialiasing
-    - refactor to have config as part of scene? Or two files?
+    - 10. Materials
+        - material absorbs
+        - scatters
+        - if scattered, how much does it attentuate
+    - add refraction and transparency
+    
 
     Bug:
     - light position isn't lining up with what's showing
+    - refactor?
 */
 
 /* ---------- Structures ----------- */
@@ -68,6 +67,8 @@ struct Params
     int fov = 90;
 
     int samplesPerPixel = 1;
+
+    int numBouncesPerRay = MAX_NUM_BOUNCES_PER_RAY;
 
     bool runUnitTests;
 };
@@ -86,7 +87,8 @@ bool RenderScene(
 
 Vector3f CastRay(
     const Vector3f& ray,
-    Scene scene);
+    Scene scene,
+    int numBounces);
 
 inline double random_double();
 
@@ -99,7 +101,7 @@ int main(int argc, char** argv)
 {
     // Read shapes in from files
     Params params;
-    if (argc < 1)
+    if (argc < 2)
     {
         FailBadArgs();
         return -1;
@@ -127,11 +129,6 @@ int main(int argc, char** argv)
     ReadScene(params.sceneFile, scene);
 
     // Use current ray tracing technique to render the scene
-    // This is starting off as just hit then light
-    // with a constant light source
-    // Then we'll expand to several bounces + hopefuly light
-    // then bidirectional
-    // TODO: describe the whole scene plus light sources
     RenderScene(scene, params);
     return 0;
 }
@@ -147,6 +144,7 @@ void FailBadArgs()
     cout << "-w <int>                       : image width" << endl;
     cout << "-f <int>                       : field of view in degrees" << endl;
     cout << "-s <int>                       : samples per pixel" << endl;
+    cout << "-b <int>                       : num bounces per ray, capped at 10." << endl;
     cout << "-i <input_scene_filename>      : contains the scene to be rendered." << endl;
     cout << "-o <output_image_filename>     : name of .ppm file to save output to." << endl;
     cout << "-u                             : runs unit tests instead of rendering image." << endl;
@@ -214,6 +212,16 @@ bool ParseArgs(const int argc, char** argv, Params& params)
         {
             params.samplesPerPixel = stoi(argv[++i]);
             if (params.samplesPerPixel< 1)
+            {
+                cout << "Bad argument!" << endl;
+                FailBadArgs();
+                return false;
+            }
+        }
+        else if (strcmp("-b", argv[i]) == 0)
+        {
+            params.numBouncesPerRay = stoi(argv[++i]);
+            if (params.numBouncesPerRay > MAX_NUM_BOUNCES_PER_RAY)
             {
                 cout << "Bad argument!" << endl;
                 FailBadArgs();
@@ -303,7 +311,8 @@ bool RenderScene(
     float oneVerticalPixel = -(2 * (1 + 0.5) / height - 1) * tan(fov / 2.);
 
     // Send rays from each pixel, checking over all shapes for collisions
-    // TODO: hold shapes in an oct-tree, or similar, to make this more efficient
+    // TODO: hold shapes in a BVH, or similar, to make this more efficient
+    //       given that we just have a small number of spheres and planes, don't worry about this for now
     // TODO: parallelise
     //#pragma omp parallel for
     for (int h = 0; h < params.height; ++h)
@@ -316,14 +325,16 @@ bool RenderScene(
             auto finalColour = Vector3f(0, 0, 0);
             for (int n = 0; n < params.samplesPerPixel; ++n)
             {
-                // perturb x and y by an amount not larger than half a pixel
-                double r1 = random_double() - 0.5;
-                double r2 = random_double() - 0.5;
+                // perturb x and y by an amount not larger than a quarter pixel
+                // since pixel intensities are gaussian-distributed at the centre of the pixel
+                // [0, 0.5] + 0.25 = [0.25, 0.75]
+                double r1 = 0.5*random_double() - 0.25;
+                double r2 = 0.5*random_double() - 0.25;
                 Vector3f ray(x+r1, y+r2, 1.f);
                 ray.normalize();
 
                 // Accumulate the colour over all sampled rays
-                finalColour += CastRay(ray, scene);
+                finalColour += CastRay(ray, scene, params.numBouncesPerRay);
             }
 
             // Get the average pixel colour. Values are clamped when written out.
@@ -343,7 +354,8 @@ bool RenderScene(
 */
 Vector3f CastRay(
     const Vector3f& ray,
-    Scene scene)
+    Scene scene,
+    int numBounces)
 {
     vector<Light*> lights = scene.GetLights();
     vector<Shape*> shapes = scene.GetShapes();
@@ -360,7 +372,9 @@ Vector3f CastRay(
         LightCollision collision;
         if (s->DoesRayIntersect(ray, distance, collision))
         {
-            if (distance < closestDist)
+                                        // don't use distances too close, in case reflection 
+                                        // rays got spawned beneath the surface
+            if (distance < closestDist && distance > EPSILON)
             {
                 colour = Vector3f(collision.colour[0], collision.colour[1], collision.colour[2]);
                 closestDist = distance;
@@ -368,6 +382,8 @@ Vector3f CastRay(
                 surfaceNormal = collision.surfaceNormal;
             }
         }
+
+        // add bounces, so adjust ray and call this recursively
     }
 
     if (closestShapeIndex != -1)
@@ -382,8 +398,24 @@ Vector3f CastRay(
             diffuseIntensity += l->GetIntensity() * max(0.f, lightDir.dot(surfaceNormal));
         }
 
-        colour = diffuseIntensity* colour;
-    }
+        // How much light this reflects back toward the ray origin vs absorbs
+        // Maybe should call this absorption factor
+        float diffusionFactor = shapes[closestShapeIndex]->GetDiffusionFactor();
+        colour = diffusionFactor * diffuseIntensity * colour;
 
+        if (numBounces > 0)
+        {
+            // Compute reflection ray
+            // reflected ray = R - 2 (dot(R, N)) * N
+            // where R = ray, N = normal
+            auto reflectedRay = ray - 2 * ray.dot(surfaceNormal) * surfaceNormal;
+            // add a smidge of random to this vector for diffuse reflection
+
+            // This 0.5 is the reflectance factor
+            // final colour should contain some surface colour and some reflected colour
+            colour += 0.5 * CastRay(reflectedRay, scene, numBounces-1);
+        }
+    }
+    
     return colour;
 }

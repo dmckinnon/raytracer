@@ -5,6 +5,8 @@
 
 #define EPSILON 0.01
 
+#define MAX_NUM_BOUNCES_PER_RAY 10
+
 /**********************************************/
 /*############# SCENE CLASSES ################*/
 /**********************************************/
@@ -25,7 +27,9 @@ protected:
 
 };
 
-// THis struct stores the collision of light with a shape.
+class Material;
+
+// This struct stores the collision of light with a shape.
 // It contains the point where the light hit,
 // the surface normal, any reflections or refractions, the colour,
 // and whether the light was on the back face or front face.
@@ -37,7 +41,31 @@ struct LightCollision
 	Eigen::Vector3f refractedRay;
 	Eigen::Vector3f colour;
 
+	// need a material here
+	std::shared_ptr<Material> material;
+	
+
 	bool frontFace;
+};
+
+/// should material naturally be part of shape or separate?
+// Should a shape have a material? Should a shape naturally be
+// a material? No, can assign different shapes different materials
+// if a shape has a material then act on that
+class Material
+{
+	public:
+	virtual ~Material() {};
+
+	virtual bool scatter(
+		Eigen::Vector3f& incomingRay,
+		// Some sort of collision record
+		LightCollision& collision,
+		Eigen::Vector3f& attentuationColour,
+		Eigen::Vector3f& scatteredRay)
+		{
+			return false;
+		}
 };
 
 class Shape
@@ -54,8 +82,12 @@ public:
 	virtual Eigen::Vector3f GetSurfaceNormalAtPoint(
 	    Eigen::Vector3f& point) = 0;
 
+	// a property of the material itself
+	virtual float GetDiffusionFactor() = 0;
+
 protected:
 };
+
 
 class Scene
 {
@@ -133,13 +165,15 @@ class Sphere : public Shape
 {
 public:
 	Sphere();
-	Sphere(const Eigen::Vector3f& centre, const Eigen::Vector3f& colour, const float r);
+	Sphere(const Eigen::Vector3f& centre, const Eigen::Vector3f& colour, Material& m, const float r);
 	~Sphere();
 
 	bool DoesRayIntersect(
 		Eigen::Vector3f ray,
 		float& distance,
 		LightCollision& collision) override;
+
+	float GetDiffusionFactor() override;
 
 	Eigen::Vector3f GetSurfaceNormalAtPoint(
 		Eigen::Vector3f& point) override;
@@ -161,6 +195,10 @@ private:
 	Eigen::Vector3f centre;
 	Eigen::Vector3f colour;
 
+	float diffusionFactor;
+
+	Material material;
+
 	static const int BAD_RADIUS = -1;
 };
 
@@ -175,6 +213,8 @@ public:
 		Eigen::Vector3f ray,
 		float& distance,
 		LightCollision& collision) override;
+
+	float GetDiffusionFactor() override;
 
 	Eigen::Vector3f GetSurfaceNormalAtPoint(
 		Eigen::Vector3f& point) override;
@@ -192,6 +232,32 @@ private:
 	Eigen::Vector3f normal;
 	float offset;
 	Eigen::Vector3f colour;
+
+	Material material;
+
+	float diffusionFactor;
+};
+
+/**********************************************/
+/*############ MATERIAL CLASSES ##############*/
+/**********************************************/
+class Metal : public Material
+{
+public :
+	Metal();
+	// need other properties
+	~Metal() {};
+
+	bool scatter(
+		Eigen::Vector3f& incomingRay,
+		// Some sort of collision record
+		LightCollision& collision,
+		Eigen::Vector3f& attentuationColour,
+		Eigen::Vector3f& scatteredRay
+	) override;
+
+private:
+// various attentuation factors reflectivity factors, etc etc
 };
 
 // --------------------------------- //
